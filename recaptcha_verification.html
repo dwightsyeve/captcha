@@ -33,41 +33,6 @@
   <script>
     function onloadCallback() {
       grecaptcha.render('recaptcha-container', {
-        sitekey: '<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>reCAPTCHA Verification (Working Example)</title>
-  <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      background: #f4f4f4;
-    }
-    .container {
-      background: white;
-      padding: 2rem;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <h1>Please verify you’re not a robot</h1>
-    <div id="recaptcha-container"></div>
-    <p id="status">Waiting for verification...</p>
-  </div>
-
-  <script>
-    function onloadCallback() {
-      grecaptcha.render('recaptcha-container', {
         sitekey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // test key
         callback: function(token) {
           document.getElementById('status').textContent = '✅ Verified successfully!';
@@ -79,14 +44,4 @@
   </script>
 </body>
 </html>
-I', // test key
-        callback: function(token) {
-          document.getElementById('status').textContent = '✅ Verified successfully!';
-          document.getElementById('status').style.color = 'green';
-          setTimeout(() => window.location.href = 'https://example.com', 1000);
-        }
-      });
-    }
-  </script>
-</body>
-</html>
+
