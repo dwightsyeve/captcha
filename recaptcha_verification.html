@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCAPTCHA Verification</title>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .container {
+            text-align: center;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 2rem;
+        }
+        .g-recaptcha {
+            display: inline-block;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Please verify you're not a robot</h1>
+        <form id="captchaForm">
+            <div class="g-recaptcha" 
+                 data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI" 
+                 data-callback="onCaptchaSuccess"
+                 data-expired-callback="onCaptchaExpired"
+                 data-error-callback="onCaptchaError">
+            </div>
+            <p id="status">Complete the CAPTCHA to continue</p>
+        </form>
+    </div>
+
+    <script>
+        // This is a test key that always passes
+        // For production, replace with your own site key from Google reCAPTCHA
+        
+        function onCaptchaSuccess(token) {
+            document.getElementById('status').textContent = 'Verification successful! Redirecting...';
+            // Redirect to external site on success
+            window.location.href = 'https://external.com';
+        }
+
+        function onCaptchaExpired() {
+            document.getElementById('status').textContent = 'Verification expired. Please try again.';
+            grecaptcha.reset();
+        }
+
+        function onCaptchaError() {
+            document.getElementById('status').textContent = 'Verification failed. Please try again.';
+            grecaptcha.reset();
+            // Optional: Redirect to home.com on error
+            // window.location.href = 'https://home.com';
+        }
+
+        // Optional: Add timeout to redirect to home.com if user doesn't complete CAPTCHA
+        setTimeout(function() {
+            if (!grecaptcha.getResponse()) {
+                window.location.href = 'https://home.com';
+            }
+        }, 300000); // 5 minutes timeout
+    </script>
+</body>
+</html>
