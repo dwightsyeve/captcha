@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>reCAPTCHA Verification</title>
-    <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -36,62 +36,51 @@
     <div class="container">
         <h1>Please verify you're not a robot</h1>
         <form id="captchaForm">
-            <div class="g-recaptcha" 
-                 data-sitekey="6LfLjwcsAAAAAJwyFtp6JUMkOIJmAebKxkzetyH9" 
-                 data-callback="onCaptchaSuccess"
-                 data-expired-callback="onCaptchaExpired"
-                 data-error-callback="onCaptchaError">
-            </div>
+            <div id="recaptcha-container"></div>
             <p id="status">Complete the CAPTCHA to continue</p>
         </form>
     </div>
 
     <script>
-        // Initialize reCAPTCHA
+        // Render reCAPTCHA widget
         var onloadCallback = function() {
-            console.log("reCAPTCHA loaded");
+            grecaptcha.render('recaptcha-container', {
+                'sitekey': '6LfLjwcsAAAAAJwyFtp6JUMkOIJmAebKxkzetyH9',
+                'callback': function(token) {
+                    document.getElementById('status').textContent = 'Verification successful! Redirecting...';
+                    console.log('reCAPTCHA token:', token);
+                    // Redirect to external site on success
+                    setTimeout(function() {
+                        window.location.href = 'https://external.com';
+                    }, 1000);
+                },
+                'expired-callback': function() {
+                    document.getElementById('status').textContent = 'Verification expired. Please try again.';
+                    grecaptcha.reset();
+                },
+                'error-callback': function() {
+                    document.getElementById('status').textContent = 'Error verifying. Please try again.';
+                    grecaptcha.reset();
+                }
+            });
         };
 
-        function onCaptchaSuccess(token) {
-            console.log('reCAPTCHA token:', token);
-            document.getElementById('status').textContent = 'Verification successful! Redirecting...';
-            
-            // Verify the token with your backend in a real application
-            // For this example, we'll just redirect after a short delay
-            setTimeout(function() {
-                window.location.href = 'https://external.com';
-            }, 1000);
-        }
-
-        function onCaptchaExpired() {
-            console.log('reCAPTCHA expired');
-            document.getElementById('status').textContent = 'Verification expired. Please try again.';
-            grecaptcha.reset();
-        }
-
-        function onCaptchaError() {
-            console.error('reCAPTCHA error');
-            document.getElementById('status').textContent = 'Verification failed. Please try again.';
-            grecaptcha.reset();
-        }
-
-        // Add error handling for reCAPTCHA loading
+        // If reCAPTCHA fails to load
         window.onRecaptchaLoadError = function() {
-            console.error('Error loading reCAPTCHA');
             document.getElementById('status').textContent = 'Error loading reCAPTCHA. Please refresh the page or try again later.';
-            // Redirect to home if reCAPTCHA fails to load
+            console.error('Failed to load reCAPTCHA');
+            // Fallback: redirect to home after delay
             setTimeout(function() {
                 window.location.href = 'https://home.com';
             }, 3000);
         };
 
-        // Add a fallback in case reCAPTCHA doesn't load
-        setTimeout(function checkRecaptcha() {
+        // Check if reCAPTCHA loaded after a delay
+        setTimeout(function() {
             if (typeof grecaptcha === 'undefined') {
-                console.error('reCAPTCHA not loaded after timeout');
                 onRecaptchaLoadError();
             }
-        }, 10000); // 10 seconds timeout
+        }, 5000);
     </script>
 </body>
 </html>
