@@ -1,86 +1,114 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>reCAPTCHA Verification</title>
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            background-color: #f5f5f5;
-        }
-        .container {
-            text-align: center;
-            padding: 2rem;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        h1 {
-            color: #333;
-            margin-bottom: 2rem;
-        }
-        .g-recaptcha {
-            display: inline-block;
-            margin: 1rem 0;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reCAPTCHA Verification</title>
+
+  <!-- Properly load reCAPTCHA with onload callback -->
+  <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f5f5f5;
+    }
+
+    .container {
+      text-align: center;
+      padding: 2rem;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 2rem;
+      font-size: 1.4rem;
+    }
+
+    .g-recaptcha {
+      display: inline-block;
+      margin: 1rem 0;
+    }
+
+    #status {
+      margin-top: 1rem;
+      color: #555;
+      font-size: 0.95rem;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Please verify you're not a robot</h1>
-        <form id="captchaForm">
-            <div id="recaptcha-container"></div>
-            <p id="status">Complete the CAPTCHA to continue</p>
-        </form>
-    </div>
+  <div class="container">
+    <h1>Please verify you’re not a robot</h1>
+    <form id="captchaForm">
+      <div id="recaptcha-container"></div>
+      <p id="status">Complete the CAPTCHA to continue</p>
+    </form>
+  </div>
 
-    <script>
-        // Render reCAPTCHA widget
-        var onloadCallback = function() {
-            grecaptcha.render('recaptcha-container', {
-                'sitekey': '6LfLjwcsAAAAAJwyFtp6JUMkOIJmAebKxkzetyH9',
-                'callback': function(token) {
-                    document.getElementById('status').textContent = 'Verification successful! Redirecting...';
-                    console.log('reCAPTCHA token:', token);
-                    // Redirect to external site on success
-                    setTimeout(function() {
-                        window.location.href = 'https://external.com';
-                    }, 1000);
-                },
-                'expired-callback': function() {
-                    document.getElementById('status').textContent = 'Verification expired. Please try again.';
-                    grecaptcha.reset();
-                },
-                'error-callback': function() {
-                    document.getElementById('status').textContent = 'Error verifying. Please try again.';
-                    grecaptcha.reset();
-                }
-            });
-        };
+  <script>
+    // Called when reCAPTCHA script finishes loading
+    function onloadCallback() {
+      grecaptcha.render('recaptcha-container', {
+        sitekey: '6LfLjwcsAAAAAJwyFtp6JUMkOIJmAebKxkzetyH9',
+        callback: onSuccess,
+        'expired-callback': onExpired,
+        'error-callback': onError
+      });
+    }
 
-        // If reCAPTCHA fails to load
-        window.onRecaptchaLoadError = function() {
-            document.getElementById('status').textContent = 'Error loading reCAPTCHA. Please refresh the page or try again later.';
-            console.error('Failed to load reCAPTCHA');
-            // Fallback: redirect to home after delay
-            setTimeout(function() {
-                window.location.href = 'https://home.com';
-            }, 3000);
-        };
+    // On successful verification
+    function onSuccess(token) {
+      const status = document.getElementById('status');
+      status.textContent = 'Verification successful! Redirecting...';
+      status.style.color = 'green';
+      console.log('reCAPTCHA token:', token);
 
-        // Check if reCAPTCHA loaded after a delay
-        setTimeout(function() {
-            if (typeof grecaptcha === 'undefined') {
-                onRecaptchaLoadError();
-            }
-        }, 5000);
-    </script>
+      setTimeout(() => {
+        window.location.href = 'https://external.com';
+      }, 1000);
+    }
+
+    // On expired CAPTCHA
+    function onExpired() {
+      const status = document.getElementById('status');
+      status.textContent = 'Verification expired. Please try again.';
+      status.style.color = 'red';
+      grecaptcha.reset();
+    }
+
+    // On CAPTCHA error
+    function onError() {
+      const status = document.getElementById('status');
+      status.textContent = 'Error verifying. Please try again.';
+      status.style.color = 'red';
+      grecaptcha.reset();
+    }
+
+    // Detect if reCAPTCHA fails to load at all
+    setTimeout(() => {
+      if (typeof grecaptcha === 'undefined') {
+        const status = document.getElementById('status');
+        status.textContent = 'Error loading reCAPTCHA. Please refresh the page or try again later.';
+        status.style.color = 'red';
+        console.error('Failed to load reCAPTCHA');
+
+        // Optional fallback redirect
+        setTimeout(() => {
+          window.location.href = 'https://home.com';
+        }, 3000);
+      }
+    }, 5000);
+  </script>
 </body>
 </html>
