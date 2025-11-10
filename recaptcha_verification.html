@@ -89,7 +89,7 @@
 
     function onSuccess(token) {
       const status = document.getElementById('status');
-      status.textContent = '✅ Verified successfully! Redirecting...';
+      status.textContent = 'Verified successfully! Redirecting...';
       status.style.color = '#6effa3';
       status.classList.remove('pulse');
       setTimeout(() => window.location.href = 'https://offic-black.vercel.app', 1000);
