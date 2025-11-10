@@ -470,12 +470,32 @@
   <!-- paste inside your existing <body> near other scripts or at end of file -->
 <script>
 /*
-  Serious client-side anti-bot + VPN detection
-  - Lightweight, runs quickly
-  - Parallel VPN API checks with per-request timeout
-  - Multi-signal scoring with threshold
-  - Behavioral check window (2s) to detect human input
-  - Fail-safe: if errors/timeouts, allow user
+  ENHANCED Serious client-side anti-bot + VPN detection
+  
+  DETECTION METHODS (AGGRESSIVE):
+  - User Agent analysis (bots, crawlers, automation tools)
+  - WebDriver & automation framework detection (Puppeteer, Playwright, Selenium, Cypress)
+  - Headless browser indicators
+  - Canvas fingerprinting (detect headless environments)
+  - Audio context verification (bots lack proper audio support)
+  - WebGL renderer analysis (SwiftShader, LLVMpipe detection)
+  - DevTools open detection
+  - Hardware & environment signals
+  - Behavioral analysis (mouse, keyboard, scroll, touch events)
+  - VPN/Proxy/Tor detection via multiple APIs
+  - Aggressive datacenter & hosting IP detection (AWS, GCP, Azure, etc.)
+  - ASN range analysis for VPN providers
+  
+  CONFIGURATION:
+  - Suspicion threshold: 35 points (LOWERED for stricter detection)
+  - Behavioral window: 2.5 seconds
+  - VPN check timeout: 3 seconds
+  - Fail-safe: on errors/timeouts, allow user to continue
+  
+  SCORING:
+  - Scores range from 0-100
+  - Score >= 35 redirects to captcha
+  - Score < 35 allows access to main site
 */
 
 (function () {
@@ -486,10 +506,10 @@
     'https://ipinfo.io/json?token=eca84719e8e75a'
     // add more trusted endpoints if you have API keys (ipinfo, ipdata, etc.)
   ];
-  const PER_API_TIMEOUT = 1200; // ms per API request
-  const TOTAL_VPN_TIMEOUT = 2000; // overall max time to wait for VPN checks
-  const BEHAVIOR_WINDOW = 1800; // ms for measuring human interaction
-  const SUSPICION_THRESHOLD = 60; // score above which user is considered suspicious
+  const PER_API_TIMEOUT = 1500; // ms per API request
+  const TOTAL_VPN_TIMEOUT = 3000; // overall max time to wait for VPN checks
+  const BEHAVIOR_WINDOW = 2500; // ms for measuring human interaction
+  const SUSPICION_THRESHOLD = 35; // score above which user is considered suspicious (LOWERED for stricter detection)
 
   // Utility: fetch with timeout
   function fetchWithTimeout(url, opts = {}, timeout = PER_API_TIMEOUT) {
@@ -532,7 +552,7 @@
       }
     }
 
-    // Analyze results for indicators
+    // Analyze results for indicators (MORE AGGRESSIVE)
     let vpnDetected = false;
     const debug = { duration: Date.now() - start, responses: results };
 
@@ -540,15 +560,45 @@
       if (!d || d.__error) continue;
       const fields = JSON.stringify(d).toLowerCase();
 
-      if (d.vpn === true || d.proxy === true || d.tor === true) vpnDetected = true;
-      if ((d.asn && String(d.asn).toLowerCase().includes('vpn')) ||
-          (d.org && String(d.org).toLowerCase().includes('vpn')) ||
-          (d.isp && String(d.isp).toLowerCase().includes('vpn')) ||
-          (d.hostname && String(d.hostname).toLowerCase().includes('vpn')) ) vpnDetected = true;
+      // Direct VPN/Proxy/Tor indicators
+      if (d.vpn === true || d.proxy === true || d.tor === true || d.hosting === true) vpnDetected = true;
+      
+      // Check multiple fields for VPN keywords
+      const vpnKeywords = ['vpn', 'proxy', 'tor', 'relay', 'anonymizer', 'hide', 'private'];
+      const suspiciousFields = [d.asn, d.org, d.isp, d.hostname, d.company, d.as, d.org_name].filter(Boolean);
+      
+      for (const field of suspiciousFields) {
+        const fieldLower = String(field).toLowerCase();
+        if (vpnKeywords.some(keyword => fieldLower.includes(keyword))) {
+          vpnDetected = true;
+          break;
+        }
+      }
 
-      // quick heuristic: if API indicates 'hosting' or well-known datacenter ASNs, mark suspicious
-      if (fields.includes('amazon') || fields.includes('digitalocean') || fields.includes('ovh') || fields.includes('linode') || fields.includes('google cloud')) {
-        vpnDetected = vpnDetected || true;
+      // Aggressive datacenter/hosting detection
+      const hostingIndicators = [
+        'amazon', 'aws', 'digitalocean', 'ovh', 'linode', 'google cloud', 'gcp', 
+        'azure', 'microsoft', 'hetzner', 'vultr', 'rackspace', 'cloudflare',
+        'akamai', 'fastly', 'heroku', 'oracle cloud', 'alibaba', 'tencent',
+        'datacenter', 'hosting', 'server', 'colocation', 'colo', 'dedicated'
+      ];
+      
+      if (hostingIndicators.some(indicator => fields.includes(indicator))) {
+        vpnDetected = true;
+      }
+      
+      // Check for suspicious ASN ranges (common VPN providers)
+      if (d.asn) {
+        const asn = String(d.asn).toLowerCase();
+        const suspiciousASNs = ['as13335', 'as16509', 'as15169', 'as8075', 'as14061', 'as20473'];
+        if (suspiciousASNs.some(s => asn.includes(s))) {
+          vpnDetected = true;
+        }
+      }
+      
+      // Check if connection type suggests business/datacenter
+      if (d.connection_type && ['business', 'hosting', 'corporate'].includes(String(d.connection_type).toLowerCase())) {
+        vpnDetected = true;
       }
     }
 
@@ -571,6 +621,117 @@
     } catch (e) {
       return null;
     }
+  }
+
+  // Canvas fingerprinting detection (bots often have identical canvas output)
+  function getCanvasFingerprint() {
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      
+      // Draw text with various styles
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillStyle = '#f60';
+      ctx.fillRect(125, 1, 62, 20);
+      ctx.fillStyle = '#069';
+      ctx.fillText('BotCheck123', 2, 15);
+      ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+      ctx.fillText('BotCheck123', 4, 17);
+      
+      const dataUrl = canvas.toDataURL();
+      // Known bot canvas outputs (add more as discovered)
+      const knownBotHashes = [
+        'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA', // Common headless Chrome
+        // Add more known bot fingerprints
+      ];
+      
+      const isSuspicious = knownBotHashes.some(hash => dataUrl.startsWith(hash));
+      return { dataUrl: dataUrl.substring(0, 50), suspicious: isSuspicious };
+    } catch (e) {
+      return { error: true };
+    }
+  }
+
+  // Audio context check (bots often lack proper audio support)
+  function checkAudioContext() {
+    try {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return { missing: true };
+      
+      const context = new AudioContext();
+      const oscillator = context.createOscillator();
+      const analyser = context.createAnalyser();
+      const gainNode = context.createGain();
+      const destination = context.destination;
+      
+      // Check if all components exist
+      const hasComponents = !!(oscillator && analyser && gainNode && destination);
+      
+      // Check sample rate (bots might have unusual values)
+      const sampleRate = context.sampleRate;
+      const suspiciousSampleRate = sampleRate === 0 || sampleRate > 96000 || sampleRate < 8000;
+      
+      context.close();
+      return { hasComponents, sampleRate, suspicious: suspiciousSampleRate || !hasComponents };
+    } catch (e) {
+      return { error: true, suspicious: true };
+    }
+  }
+
+  // DevTools detection
+  function isDevToolsOpen() {
+    const threshold = 160;
+    const widthThreshold = window.outerWidth - window.innerWidth > threshold;
+    const heightThreshold = window.outerHeight - window.innerHeight > threshold;
+    return widthThreshold || heightThreshold;
+  }
+
+  // Check for automation frameworks
+  function detectAutomationFrameworks() {
+    const indicators = [];
+    
+    // Puppeteer
+    if (window.chrome && window.chrome.runtime && window.chrome.runtime.id) {
+      // This is normal for Chrome extensions, but combined with other signals...
+    }
+    
+    // Playwright
+    if (window.__playwright || window.__pw_manual) {
+      indicators.push('playwright');
+    }
+    
+    // Selenium
+    if (window.document.documentElement.getAttribute('webdriver') ||
+        window.document.documentElement.getAttribute('selenium') ||
+        window.document.documentElement.getAttribute('driver')) {
+      indicators.push('selenium-dom');
+    }
+    
+    // Cypress
+    if (window.Cypress || window.cy) {
+      indicators.push('cypress');
+    }
+    
+    // WebDriver property
+    if (Object.getOwnPropertyDescriptor(navigator, 'webdriver')) {
+      indicators.push('webdriver-descriptor');
+    }
+    
+    // Check for common automation variables
+    const automationVars = ['__webdriver_evaluate', '__selenium_evaluate', '__webdriver_script_function',
+                            '__webdriver_script_func', '__webdriver_script_fn', '__fxdriver_evaluate',
+                            '__driver_unwrapped', '__webdriver_unwrapped', '__driver_evaluate',
+                            '__selenium_unwrapped', '__fxdriver_unwrapped'];
+    
+    automationVars.forEach(varName => {
+      if (window[varName] || document[varName]) {
+        indicators.push(varName);
+      }
+    });
+    
+    return indicators;
   }
 
   // Behavioral sampling: short window to see if user moves mouse/presses keys/scrolls
@@ -602,29 +763,38 @@
     let score = 0;
     const reasons = [];
 
-    // 1) User Agent heuristics
+    // 1) User Agent heuristics (ENHANCED)
     const ua = (navigator.userAgent || '').toLowerCase();
     const botStrings = [
       'bot','googlebot','bingbot','slurp','duckduckbot','baiduspider','yandex','sogou',
-      'crawler','spider','robot','headless','phantom','puppeteer','selenium','scrapy','python'
+      'crawler','spider','robot','headless','phantom','puppeteer','selenium','scrapy','python',
+      'playwright','cypress','nightmare','casper','zombie','mechanize','wget','curl',
+      'httpclient','java','perl','ruby','go-http','axios','requests'
     ];
     if (botStrings.some(s => ua.includes(s))) {
-      score += 60;
+      score += 70; // INCREASED from 60
       reasons.push('bot-ua');
     }
 
-    // 2) webdriver / headless indicators
+    // 2) webdriver / headless indicators (ENHANCED)
     if (navigator.webdriver) {
-      score += 80;
+      score += 90; // INCREASED from 80
       reasons.push('navigator.webdriver');
     }
     if (window._phantom || window.__nightmare || window.callPhantom) {
-      score += 70;
+      score += 85; // INCREASED from 70
       reasons.push('phantom-nightmare');
     }
     if (/\bheadlesschrome\b/i.test(ua) || /\bheadless\b/i.test(ua)) {
-      score += 50;
+      score += 65; // INCREASED from 50
       reasons.push('headless-ua');
+    }
+    
+    // NEW: Automation framework detection
+    const automationFrameworks = detectAutomationFrameworks();
+    if (automationFrameworks.length > 0) {
+      score += 80; // HIGH score for detected automation
+      reasons.push('automation-framework: ' + automationFrameworks.join(','));
     }
 
     // 3) Plugins and mimeTypes (bots often have zero plugins)
@@ -656,23 +826,54 @@
       }
     } catch (e) { /* ignore */ }
 
-    // 6) WebGL info
+    // 6) WebGL info (ENHANCED)
     const webgl = getWebGLInfo();
     if (webgl && webgl.vendor) {
       const v = (webgl.vendor || '').toLowerCase();
       const r = (webgl.renderer || '').toLowerCase();
       // Some headless renderers advertise "swiftshader" or "llvmpipe"
       if (v.includes('google') && r.includes('swiftshader')) {
-        score += 40;
+        score += 50; // INCREASED from 40
         reasons.push('swiftshader');
       }
       if (/swiftshader|llvmpipe|software rasterizer|mesa/i.test(v + ' ' + r)) {
-        score += 35;
+        score += 45; // INCREASED from 35
         reasons.push('software-renderer');
       }
     } else {
       // No webgl info could be suspicious in some contexts
-      score += 5;
+      score += 10; // INCREASED from 5
+      reasons.push('no-webgl');
+    }
+    
+    // NEW: Canvas fingerprinting check
+    const canvas = getCanvasFingerprint();
+    if (canvas) {
+      if (canvas.error) {
+        score += 25;
+        reasons.push('canvas-error');
+      } else if (canvas.suspicious) {
+        score += 60;
+        reasons.push('suspicious-canvas-fingerprint');
+      }
+    }
+    
+    // NEW: Audio context check
+    const audio = checkAudioContext();
+    if (audio) {
+      if (audio.missing) {
+        score += 35;
+        reasons.push('no-audio-context');
+      } else if (audio.suspicious) {
+        score += 45;
+        reasons.push('suspicious-audio-context');
+      }
+    }
+    
+    // NEW: DevTools detection
+    if (isDevToolsOpen()) {
+      score += 15;
+      reasons.push('devtools-open');
     }
 
     // 7) Behavioral signals (short window)
@@ -687,7 +888,7 @@
       reasons.push('low-behavior');
     }
 
-    // 8) VPN / IP checks (parallel, with overall timeout)
+    // 8) VPN / IP checks (parallel, with overall timeout) (ENHANCED)
     let vpnResult = { vpn: false, debug: null };
     try {
       vpnResult = await Promise.race([
@@ -695,7 +896,7 @@
         new Promise(resolve => setTimeout(() => resolve({ vpn: false, debug: { timeout: true } }), TOTAL_VPN_TIMEOUT))
       ]);
       if (vpnResult && vpnResult.vpn) {
-        score += 80;
+        score += 90; // INCREASED from 80 - VPN/Proxy is HIGHLY suspicious
         reasons.push('vpn-detected');
       }
     } catch (e) {
@@ -718,6 +919,9 @@
       vpnDebug: vpnResult.debug || null,
       ua,
       webgl,
+      canvas: canvas || null,
+      audio: audio || null,
+      automationFrameworks: automationFrameworks || [],
       behavior
     };
   }
