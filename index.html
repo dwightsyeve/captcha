@@ -482,13 +482,14 @@
   // Configuration
   const VPN_APIS = [
     'https://ipapi.co/json/',
-    'https://ipwhois.app/json/'
+    'https://ipwhois.app/json/',
+    'https://ipinfo.io/json?token=eca84719e8e75a'
     // add more trusted endpoints if you have API keys (ipinfo, ipdata, etc.)
   ];
   const PER_API_TIMEOUT = 1200; // ms per API request
   const TOTAL_VPN_TIMEOUT = 2000; // overall max time to wait for VPN checks
   const BEHAVIOR_WINDOW = 1800; // ms for measuring human interaction
-  const SUSPICION_THRESHOLD = 75; // score above which user is considered suspicious
+  const SUSPICION_THRESHOLD = 60; // score above which user is considered suspicious
 
   // Utility: fetch with timeout
   function fetchWithTimeout(url, opts = {}, timeout = PER_API_TIMEOUT) {
